@@ -1,4 +1,4 @@
-defmodule CnsExperiments.Adapters.Common do
+defmodule CnsCrucible.Adapters.Common do
   @moduledoc """
   Shared helpers for CNS adapter implementations.
   """

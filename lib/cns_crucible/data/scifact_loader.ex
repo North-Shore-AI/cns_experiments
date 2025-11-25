@@ -1,4 +1,4 @@
-defmodule CnsExperiments.Data.ScifactLoader do
+defmodule CnsCrucible.Data.ScifactLoader do
   @moduledoc """
   Load real SciFact training data from JSONL files.
   """
@@ -16,7 +16,7 @@ defmodule CnsExperiments.Data.ScifactLoader do
     limit = Keyword.get(opts, :limit, :all)
     shuffle = Keyword.get(opts, :shuffle, false)
 
-    path = Application.app_dir(:cns_experiments, @data_path)
+    path = Application.app_dir(:cns_crucible, @data_path)
 
     if File.exists?(path) do
       examples =

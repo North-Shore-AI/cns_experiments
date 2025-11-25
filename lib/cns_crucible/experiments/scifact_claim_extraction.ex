@@ -1,4 +1,4 @@
-defmodule CnsExperiments.Experiments.ScifactClaimExtraction do
+defmodule CnsCrucible.Experiments.ScifactClaimExtraction do
   @moduledoc """
   Canonical CNS claim extraction experiment on SciFact dataset.
 
@@ -14,10 +14,10 @@ defmodule CnsExperiments.Experiments.ScifactClaimExtraction do
   ## Usage
 
       # Run with defaults
-      CnsExperiments.Experiments.ScifactClaimExtraction.run()
+      CnsCrucible.Experiments.ScifactClaimExtraction.run()
 
       # Run with custom options
-      CnsExperiments.Experiments.ScifactClaimExtraction.run(
+      CnsCrucible.Experiments.ScifactClaimExtraction.run(
         batch_size: 8,
         limit: 100,
         base_model: "meta-llama/Llama-3.2-3B"
@@ -27,7 +27,7 @@ defmodule CnsExperiments.Experiments.ScifactClaimExtraction do
 
   - Tinkex API key configured
   - Dataset at priv/data/scifact_claim_extractor_clean.jsonl
-  - CNS adapters configured in `cns_experiments` config
+  - CNS adapters configured in `cns_crucible` config
   """
 
   require Logger

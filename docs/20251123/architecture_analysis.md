@@ -34,7 +34,7 @@ This is in the **experiment harness**, NOT in core CNS theory.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    cns_experiments                       │
+│                    cns_crucible                       │
 │         (Experiment Harness - USES MODELS)               │
 │  ┌─────────────────┐  ┌──────────────────┐              │
 │  │ SciFact Data    │  │ Bumblebee Models │              │
@@ -84,7 +84,7 @@ This is in the **experiment harness**, NOT in core CNS theory.
 - Embedding computation
 - Any ML model loading
 
-### s:\cns_experiments (Experiment Harness)
+### s:\cns_crucible (Experiment Harness)
 
 **Should have:**
 - SciFact data loading
@@ -108,7 +108,7 @@ This is in the **experiment harness**, NOT in core CNS theory.
 
 ### Training Flow (Correct)
 ```
-SciFact Data → cns_experiments → Crucible.Lora → Tinkex API
+SciFact Data → cns_crucible → Crucible.Lora → Tinkex API
 ```
 - Uses Tinkex for actual gradient computation
 - No local ML models needed
@@ -127,7 +127,7 @@ Trained Model → Sample → Evaluate Output → Metrics
 ```
 - Models evaluate the MODEL'S OUTPUTS
 - Not part of training loop
-- Should be in cns_experiments, not cns
+- Should be in cns_crucible, not cns
 
 ---
 
@@ -140,9 +140,9 @@ Trained Model → Sample → Evaluate Output → Metrics
 3. **Hard to use cns standalone** - Can't use claim parsing without downloading models
 4. **Duplicates Python architecture mistake** - We should learn from thinker's clean separation
 
-### Impact on cns_experiments
+### Impact on cns_crucible
 
-Currently cns_experiments:
+Currently cns_crucible:
 - Depends on cns (with its Bumblebee baggage)
 - Has Tinkex training correctly wired
 - But evaluation still uses cns placeholders (not Bumblebee)
@@ -167,11 +167,11 @@ else
 end
 ```
 
-### Option 2: Move Models to cns_experiments (PREFERRED)
+### Option 2: Move Models to cns_crucible (PREFERRED)
 
 1. Remove Bumblebee from cns/mix.exs
-2. Add Bumblebee to cns_experiments/mix.exs
-3. Create `CnsExperiments.Evaluation.SemanticValidator` module
+2. Add Bumblebee to cns_crucible/mix.exs
+3. Create `CnsCrucible.Evaluation.SemanticValidator` module
 4. Keep cns as pure theory with heuristic fallbacks
 
 ---
@@ -202,7 +202,7 @@ Models are ONLY in `thinker/semantic_validation.py`.
 - Computing semantic validation metrics
 - Quality assessment of generated claims
 
-### Q: Does cns model stuff relate to training in cns_experiments?
+### Q: Does cns model stuff relate to training in cns_crucible?
 
 **No.** Training uses Tinkex API (remote GPU). Models in cns would be for LOCAL evaluation of outputs, which is a separate concern.
 
@@ -210,7 +210,7 @@ Models are ONLY in `thinker/semantic_validation.py`.
 
 ## Next Steps
 
-1. **Move Bumblebee to cns_experiments** - Keep cns pure
-2. **Create CnsExperiments.Evaluation** - Port semantic_validation logic
+1. **Move Bumblebee to cns_crucible** - Keep cns pure
+2. **Create CnsCrucible.Evaluation** - Port semantic_validation logic
 3. **Update cns to use heuristics only** - Or make models optional
 4. **Document the architecture** - Clear separation of concerns

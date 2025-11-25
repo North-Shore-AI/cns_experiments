@@ -1,7 +1,7 @@
-defmodule CnsExperiments.Pipelines.ScifactValidationTest do
+defmodule CnsCrucible.Pipelines.ScifactValidationTest do
   use ExUnit.Case, async: true
 
-  alias CnsExperiments.Pipelines.ScifactValidation
+  alias CnsCrucible.Pipelines.ScifactValidation
 
   describe "validate/2" do
     test "validates a single claim with evidence" do

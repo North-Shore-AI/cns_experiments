@@ -1,4 +1,4 @@
-# CNS Experiments
+# CNS Crucible
 
 **The integration harness for CNS + Crucible + Tinkex experiments**
 
@@ -9,7 +9,7 @@
 
 ## Overview
 
-`cns_experiments` is the **glue layer** that wires together:
+`cns_crucible` is the **glue layer** that wires together:
 - **CNS**: Dialectical reasoning and claim synthesis
 - **CrucibleFramework**: Reliability-first experiment engine
 - **Tinkex**: LoRA fine-tuning via the Tinker API
@@ -32,7 +32,7 @@ This application provides:
   parent_dir/
   ├── cns/
   ├── crucible_framework/
-  ├── cns_experiments/
+  ├── cns_crucible/
   └── tinkex/
   ```
 - (Optional) `TINKER_API_KEY` for live training runs
@@ -40,7 +40,7 @@ This application provides:
 ### Installation
 
 ```bash
-cd cns_experiments
+cd cns_crucible
 mix deps.get
 mix compile
 ```
@@ -52,10 +52,10 @@ mix compile
 iex -S mix
 
 # Run with defaults
-CnsExperiments.Experiments.ScifactClaimExtraction.run()
+CnsCrucible.Experiments.ScifactClaimExtraction.run()
 
 # Run with custom options
-CnsExperiments.Experiments.ScifactClaimExtraction.run(
+CnsCrucible.Experiments.ScifactClaimExtraction.run(
   batch_size: 8,
   limit: 100,
   base_model: "meta-llama/Llama-3.2-3B",
@@ -66,18 +66,18 @@ CnsExperiments.Experiments.ScifactClaimExtraction.run(
 ### Via Mix Task
 
 ```bash
-mix cns.run_claim_experiment --limit 50 --batch-size 4
+mix cns_crucible.run_claim_experiment --limit 50
 ```
 
 ---
 
 ## Architecture
 
-`cns_experiments` sits at the top of the integration stack:
+`cns_crucible` sits at the top of the integration stack:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                       cns_experiments                            │
+│                       cns_crucible                            │
 │                                                                  │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐ │
 │  │ Experiments      │  │ Adapters         │  │ Data Loaders  │ │
@@ -114,7 +114,7 @@ Adapters implement Crucible's CNS behaviours, bridging CNS library functions int
 
 ### Metrics Adapter
 
-**File**: `lib/cns_experiments/adapters/metrics.ex`
+**File**: `lib/cns_crucible/adapters/metrics.ex`
 **Implements**: `Crucible.CNS.Adapter`
 
 Computes comprehensive CNS quality metrics:
@@ -133,12 +133,12 @@ Computes comprehensive CNS quality metrics:
 
 ```elixir
 # Usage (called by Crucible.Stage.CNSMetrics)
-{:ok, metrics} = CnsExperiments.Adapters.Metrics.evaluate(examples, outputs)
+{:ok, metrics} = CnsCrucible.Adapters.Metrics.evaluate(examples, outputs)
 ```
 
 ### Surrogates Adapter
 
-**File**: `lib/cns_experiments/adapters/surrogates.ex`
+**File**: `lib/cns_crucible/adapters/surrogates.ex`
 **Implements**: `Crucible.CNS.SurrogateAdapter`
 
 Computes lightweight topology surrogates without full TDA:
@@ -154,24 +154,24 @@ Computes lightweight topology surrogates without full TDA:
 
 ```elixir
 # Usage (called by Crucible.Stage.CNSSurrogateValidation)
-{:ok, result} = CnsExperiments.Adapters.Surrogates.compute_surrogates(examples, outputs)
+{:ok, result} = CnsCrucible.Adapters.Surrogates.compute_surrogates(examples, outputs)
 ```
 
 ### TDA Adapter
 
-**File**: `lib/cns_experiments/adapters/tda.ex`
+**File**: `lib/cns_crucible/adapters/tda.ex`
 **Implements**: `Crucible.CNS.TdaAdapter`
 
 Full topological data analysis when surrogates indicate potential issues.
 
 ```elixir
 # Usage (called by Crucible.Stage.CNSTdaValidation)
-{:ok, result} = CnsExperiments.Adapters.TDA.compute_tda(snos)
+{:ok, result} = CnsCrucible.Adapters.TDA.compute_tda(snos)
 ```
 
 ### Common Utilities
 
-**File**: `lib/cns_experiments/adapters/common.ex`
+**File**: `lib/cns_crucible/adapters/common.ex`
 
 Shared parsing and transformation utilities:
 - `parse_outputs/1` - Parse LLM outputs into structured results
@@ -185,7 +185,7 @@ Shared parsing and transformation utilities:
 
 ### SciFact Claim Extraction
 
-**File**: `lib/cns_experiments/experiments/scifact_claim_extraction.ex`
+**File**: `lib/cns_crucible/experiments/scifact_claim_extraction.ex`
 
 The canonical "hello world" experiment demonstrating full integration.
 
@@ -252,16 +252,16 @@ Statistical Tests:
 
 ### SciFact Loader
 
-**File**: `lib/cns_experiments/data/scifact_loader.ex`
+**File**: `lib/cns_crucible/data/scifact_loader.ex`
 
 Loads the SciFact claim extraction dataset:
 
 ```elixir
 # Load all examples
-{:ok, examples} = CnsExperiments.Data.ScifactLoader.load()
+{:ok, examples} = CnsCrucible.Data.ScifactLoader.load()
 
 # Load with options
-{:ok, examples} = CnsExperiments.Data.ScifactLoader.load(
+{:ok, examples} = CnsCrucible.Data.ScifactLoader.load(
   path: "path/to/custom.jsonl",
   limit: 100,
   batch_size: 8
@@ -279,12 +279,12 @@ Expected JSONL format:
 
 ### SciFact Validation Pipeline
 
-**File**: `lib/cns_experiments/pipelines/scifact_validation.ex`
+**File**: `lib/cns_crucible/pipelines/scifact_validation.ex`
 
 Standalone validation pipeline (without training):
 
 ```elixir
-CnsExperiments.Pipelines.ScifactValidation.run(
+CnsCrucible.Pipelines.ScifactValidation.run(
   examples: examples,
   outputs: model_outputs
 )
@@ -301,9 +301,9 @@ import Config
 
 # CNS adapter configuration
 config :crucible_framework,
-  cns_adapter: CnsExperiments.Adapters.Metrics,
-  cns_surrogate_adapter: CnsExperiments.Adapters.Surrogates,
-  cns_tda_adapter: CnsExperiments.Adapters.TDA
+  cns_adapter: CnsCrucible.Adapters.Metrics,
+  cns_surrogate_adapter: CnsCrucible.Adapters.Surrogates,
+  cns_tda_adapter: CnsCrucible.Adapters.TDA
 
 # Quality thresholds
 config :cns,
@@ -343,7 +343,7 @@ This section documents how the Crucible IR is used throughout the integration, m
 
 ### How IR Flows Through the System
 
-1. **Experiment Definition** (`cns_experiments`):
+1. **Experiment Definition** (`cns_crucible`):
    ```elixir
    %Experiment{
      id: "cns_scifact_tinkex_v1",
@@ -364,9 +364,9 @@ This section documents how the Crucible IR is used throughout the integration, m
    - `Registry.stage_module/1` maps `:cns_metrics` -> `Crucible.Stage.CNSMetrics`
    - Stage receives `%Context{}` and `opts` from `%StageDef{}`
 
-4. **Adapter Invocation** (`cns_experiments`):
+4. **Adapter Invocation** (`cns_crucible`):
    - `Crucible.Stage.CNSMetrics` calls configured `cns_adapter`
-   - Adapter (e.g., `CnsExperiments.Adapters.Metrics`) processes data
+   - Adapter (e.g., `CnsCrucible.Adapters.Metrics`) processes data
    - Returns metrics that stage adds to `context.metrics`
 
 5. **Backend Calls** (`crucible_framework` -> `tinkex`):
@@ -393,8 +393,8 @@ The implementation matches the design spec:
 
 ```
 lib/
-├── cns_experiments.ex                # Application entry point
-├── cns_experiments/
+├── cns_crucible.ex                # Application entry point
+├── cns_crucible/
 │   ├── application.ex                # OTP Application
 │   ├── adapters/
 │   │   ├── common.ex                 # Shared utilities
@@ -410,7 +410,7 @@ lib/
 │       └── scifact_validation.ex     # Validation-only pipeline
 └── mix/
     └── tasks/
-        └── cns.run_claim_experiment.ex # Mix task
+        └── cns_crucible.run_claim_experiment.ex # Mix task
 ```
 
 ---
@@ -423,11 +423,11 @@ lib/
 # Clone all required repos as siblings
 git clone https://github.com/North-Shore-AI/cns.git
 git clone https://github.com/North-Shore-AI/crucible_framework.git
-git clone https://github.com/North-Shore-AI/cns_experiments.git
+git clone https://github.com/North-Shore-AI/cns_crucible.git
 git clone https://github.com/North-Shore-AI/tinkex.git
 
-# Setup cns_experiments
-cd cns_experiments
+# Setup cns_crucible
+cd cns_crucible
 mix deps.get
 mix compile
 ```
@@ -442,7 +442,7 @@ mix test
 mix test --cover
 
 # Run specific test file
-mix test test/cns_experiments/adapters/metrics_test.exs
+mix test test/cns_crucible/experiments/scifact_claim_extraction_test.exs
 ```
 
 ### Documentation

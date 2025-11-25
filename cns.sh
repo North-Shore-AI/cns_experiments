@@ -10,10 +10,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo_info() { echo -e "${BLUE}[cns]${NC} $1"; }
-echo_success() { echo -e "${GREEN}[cns]${NC} $1"; }
-echo_warn() { echo -e "${YELLOW}[cns]${NC} $1"; }
-echo_error() { echo -e "${RED}[cns]${NC} $1"; }
+echo_info() { echo -e "${BLUE}[cns_crucible]${NC} $1"; }
+echo_success() { echo -e "${GREEN}[cns_crucible]${NC} $1"; }
+echo_warn() { echo -e "${YELLOW}[cns_crucible]${NC} $1"; }
+echo_error() { echo -e "${RED}[cns_crucible]${NC} $1"; }
 
 ensure_deps() {
   if [ ! -d "$ROOT_DIR/deps" ]; then
@@ -36,12 +36,12 @@ run_mix() {
 usage() {
   cat <<'HELP'
 
-╔═══════════════════════════════════════════════════════════════╗
-║              CNS Experiments Command Menu                      ║
-╠═══════════════════════════════════════════════════════════════╣
-║  Recommended flow: 10 → 1 → 2/3/4 → 5                         ║
-║  (data setup → validate → train → eval)                       ║
-╚═══════════════════════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════════════╗
+║                 CNS Crucible Command Menu                      ║
+╠════════════════════════════════════════════════════════════════╣
+║  Recommended flow: 10 → 1 → 2/3/4 → 5                          ║
+║  (data setup → validate → train → eval)                        ║
+╚════════════════════════════════════════════════════════════════╝
 
  VALIDATE
   1) Validate claims (SciFact, 50 samples)
@@ -80,48 +80,48 @@ HELP
 
 run_validate() {
   echo_info "Validating claims (50 samples)..."
-  run_mix cns.run_claim_experiment --limit 50
+  run_mix cns_crucible.run_claim_experiment --limit 50
 }
 
 run_train_tinkex() {
   echo_info "Training with Tinkex backend (50 samples)..."
-  run_mix cns.run_claim_experiment --limit 50 --train
+  run_mix cns_crucible.run_claim_experiment --limit 50 --train
 }
 
 run_train_micro() {
   echo_info "Training with Tinkex backend (5 samples - micro)..."
-  run_mix cns.run_claim_experiment --limit 5 --train
+  run_mix cns_crucible.run_claim_experiment --limit 5 --train
 }
 
 run_train_debug() {
   echo_info "Training debug config (10 samples)..."
-  run_mix cns.run_claim_experiment --limit 10 --train
+  run_mix cns_crucible.run_claim_experiment --limit 10 --train
 }
 
 run_eval() {
   echo_info "Evaluating model (50 samples)..."
-  run_mix cns.run_claim_experiment --limit 50
+  run_mix cns_crucible.run_claim_experiment --limit 50
 }
 
 run_eval_limited() {
   echo_info "Evaluating model (5 samples - limited)..."
-  run_mix cns.run_claim_experiment --limit 5
+  run_mix cns_crucible.run_claim_experiment --limit 5
 }
 
 run_full_pipeline() {
   echo_info "Running full pipeline (validate → train → eval)..."
   echo_info "Step 1/3: Validate..."
-  run_mix cns.run_claim_experiment --limit 50
+  run_mix cns_crucible.run_claim_experiment --limit 50
   echo_info "Step 2/3: Train..."
-  run_mix cns.run_claim_experiment --limit 50 --train
+  run_mix cns_crucible.run_claim_experiment --limit 50 --train
   echo_info "Step 3/3: Evaluate..."
-  run_mix cns.run_claim_experiment --limit 50
+  run_mix cns_crucible.run_claim_experiment --limit 50
   echo_success "Full pipeline complete"
 }
 
 run_antagonist() {
   echo_info "Running Antagonist analysis..."
-  echo_warn "Antagonist not yet wired to cns_experiments"
+  echo_warn "Antagonist not yet wired to cns_crucible"
   echo "  Will analyze latest evaluation for quality issues"
 }
 
@@ -140,7 +140,7 @@ run_data_embedding() {
 run_info() {
   echo_info "Pipeline information:"
   echo ""
-  echo "  CNS Experiments Pipeline"
+  echo "  CNS Crucible Pipeline"
   echo "  ========================"
   echo "  1. Load dataset (SciFact)"
   echo "  2. Validate through 4-stage pipeline:"
@@ -157,9 +157,9 @@ run_info() {
 run_list_experiments() {
   echo_info "Available experiments:"
   echo ""
-  echo "  • CnsExperiments.Experiments.ClaimExtraction"
+  echo "  • CnsCrucible.Experiments.ClaimExtraction"
   echo "    - Validates SciFact claims through 4-stage pipeline"
-  echo "    - mix cns.run_claim_experiment --limit N [--train]"
+  echo "    - mix cns_crucible.run_claim_experiment --limit N [--train]"
   echo ""
   echo "  Planned:"
   echo "  • ClaimGeneration"

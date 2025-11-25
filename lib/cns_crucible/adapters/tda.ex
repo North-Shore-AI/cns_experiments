@@ -1,4 +1,4 @@
-defmodule CnsExperiments.Adapters.TDA do
+defmodule CnsCrucible.Adapters.TDA do
   @moduledoc """
   CNS-based implementation of `Crucible.CNS.TDAAdapter`.
   """
@@ -8,7 +8,7 @@ defmodule CnsExperiments.Adapters.TDA do
   require Logger
 
   alias CNS.Topology.TDA
-  alias CnsExperiments.Adapters.Common
+  alias CnsCrucible.Adapters.Common
 
   @impl true
   def compute_tda(examples, outputs, opts \\ %{}) do
@@ -38,7 +38,7 @@ defmodule CnsExperiments.Adapters.TDA do
           {:ok, TDA.compute_for_snos(snos, opts)}
         rescue
           e ->
-            Logger.warning("[CnsExperiments.Adapters.TDA] compute_for_snos failed: #{inspect(e)}")
+            Logger.warning("[CnsCrucible.Adapters.TDA] compute_for_snos failed: #{inspect(e)}")
             {:ok, {[], default_summary(length(snos))}}
         end
 

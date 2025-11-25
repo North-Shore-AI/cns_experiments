@@ -1,4 +1,4 @@
-defmodule CnsExperiments.Adapters.Surrogates do
+defmodule CnsCrucible.Adapters.Surrogates do
   @moduledoc """
   CNS-based implementation of `Crucible.CNS.SurrogateAdapter`.
   """
@@ -7,7 +7,7 @@ defmodule CnsExperiments.Adapters.Surrogates do
 
   alias CNS.Topology.Surrogates
   alias CNS.Topology
-  alias CnsExperiments.Adapters.Common
+  alias CnsCrucible.Adapters.Common
 
   @impl true
   def compute_surrogates(examples, outputs, opts \\ %{}) do

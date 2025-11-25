@@ -17,9 +17,9 @@ config :crucible_framework,
     bench: Crucible.Stage.Bench,
     report: Crucible.Stage.Report
   },
-  cns_adapter: CnsExperiments.Adapters.Metrics,
-  cns_surrogate_adapter: CnsExperiments.Adapters.Surrogates,
-  cns_tda_adapter: CnsExperiments.Adapters.TDA,
+  cns_adapter: CnsCrucible.Adapters.Metrics,
+  cns_surrogate_adapter: CnsCrucible.Adapters.Surrogates,
+  cns_tda_adapter: CnsCrucible.Adapters.TDA,
   guardrail_adapter: Crucible.Stage.Guardrails.Noop
 
 # Provide a minimal repo config to silence connection attempts when the application boots.

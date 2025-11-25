@@ -1,4 +1,4 @@
-defmodule CnsExperiments.Application do
+defmodule CnsCrucible.Application do
   @moduledoc false
 
   use Application
@@ -7,10 +7,10 @@ defmodule CnsExperiments.Application do
   def start(_type, _args) do
     children = [
       # Add supervised children here as needed
-      # {CnsExperiments.ModelServer, []}
+      # {CnsCrucible.ModelServer, []}
     ]
 
-    opts = [strategy: :one_for_one, name: CnsExperiments.Supervisor]
+    opts = [strategy: :one_for_one, name: CnsCrucible.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end

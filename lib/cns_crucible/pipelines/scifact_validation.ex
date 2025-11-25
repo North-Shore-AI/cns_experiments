@@ -1,4 +1,4 @@
-defmodule CnsExperiments.Pipelines.ScifactValidation do
+defmodule CnsCrucible.Pipelines.ScifactValidation do
   @moduledoc """
   Validation pipeline for SciFact claims.
 

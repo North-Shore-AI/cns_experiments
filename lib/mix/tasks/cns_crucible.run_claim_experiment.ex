@@ -1,10 +1,10 @@
-defmodule Mix.Tasks.Cns.RunClaimExperiment do
+defmodule Mix.Tasks.CnsCrucible.RunClaimExperiment do
   @moduledoc """
-  Run the CNS claim extraction experiment.
+  Run the CNS Crucible claim extraction experiment.
 
   ## Usage
 
-      mix cns.run_claim_experiment [--limit N]
+      mix cns_crucible.run_claim_experiment [--limit N]
 
   ## Options
 
@@ -13,7 +13,7 @@ defmodule Mix.Tasks.Cns.RunClaimExperiment do
 
   use Mix.Task
 
-  @shortdoc "Run CNS claim extraction experiment"
+  @shortdoc "Run CNS Crucible claim extraction experiment"
 
   @impl Mix.Task
   def run(args) do
@@ -25,11 +25,11 @@ defmodule Mix.Tasks.Cns.RunClaimExperiment do
     Mix.Task.run("app.start")
 
     limit = Keyword.get(opts, :limit, 50)
-    IO.puts("Running CNS claim extraction experiment...")
+    IO.puts("Running CNS Crucible claim extraction experiment...")
     IO.puts("  Limit: #{limit}")
     IO.puts("")
 
-    {:ok, report} = CnsExperiments.Experiments.ClaimExtraction.run(limit: limit)
+    {:ok, report} = CnsCrucible.Experiments.ClaimExtraction.run(limit: limit)
     IO.puts(report)
   end
 end

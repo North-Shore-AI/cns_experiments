@@ -1,11 +1,11 @@
-defmodule CnsExperiments.MixProject do
+defmodule CnsCrucible.MixProject do
   use Mix.Project
 
   @version "0.1.0"
 
   def project do
     [
-      app: :cns_experiments,
+      app: :cns_crucible,
       version: @version,
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
@@ -18,7 +18,7 @@ defmodule CnsExperiments.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {CnsExperiments.Application, []}
+      mod: {CnsCrucible.Application, []}
     ]
   end
 
@@ -36,7 +36,7 @@ defmodule CnsExperiments.MixProject do
       {:crucible_bench, path: "../crucible_bench"},
       {:crucible_trace, path: "../crucible_trace"},
 
-      # ML stack for CNS experiments
+      # ML stack for CNS Crucible experiments
       {:bumblebee, "~> 0.5"},
       {:exla, "~> 0.7"},
       {:nx, "~> 0.7"},

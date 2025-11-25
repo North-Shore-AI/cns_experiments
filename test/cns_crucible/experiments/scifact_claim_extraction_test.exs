@@ -1,7 +1,7 @@
-defmodule CnsExperiments.Experiments.ScifactClaimExtractionTest do
+defmodule CnsCrucible.Experiments.ScifactClaimExtractionTest do
   use ExUnit.Case, async: true
 
-  alias CnsExperiments.Experiments.ScifactClaimExtraction
+  alias CnsCrucible.Experiments.ScifactClaimExtraction
 
   alias Crucible.IR.{
     Experiment,

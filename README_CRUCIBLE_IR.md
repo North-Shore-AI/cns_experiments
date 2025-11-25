@@ -1,8 +1,8 @@
-# CNS Experiments with Crucible IR
+# CNS Crucible with Crucible IR
 
 ## Overview
 
-This document describes the new Crucible IR-based approach to defining and running CNS experiments. The Crucible IR (Intermediate Representation) provides a declarative, backend-agnostic way to define experiments that can be executed across different compute backends (Tinkex, local Nx, cloud services, etc.).
+This document describes the Crucible IR-based approach to defining and running CNS Crucible experiments. The Crucible IR (Intermediate Representation) provides a declarative, backend-agnostic way to define experiments that can be executed across different compute backends (Tinkex, local Nx, cloud services, etc.).
 
 ## Migration from Legacy Approach
 
@@ -163,7 +163,7 @@ checkpoint = context.outputs.checkpoint
 
 ```elixir
 defmodule MyExperiment do
-  alias CnsExperiments.Experiments.ScifactClaimExtraction
+  alias CnsCrucible.Experiments.ScifactClaimExtraction
 
   def run do
     # Run with custom configuration
@@ -196,8 +196,8 @@ mix run examples/cns_scifact.exs
 # With options
 mix run examples/cns_scifact.exs -- --limit 50 --batch-size 8 --model mistral-7b
 
-# From cns_experiments directory
-mix test test/cns_experiments/experiments/scifact_claim_extraction_test.exs
+# From cns_crucible directory
+mix test test/cns_crucible/experiments/scifact_claim_extraction_test.exs
 ```
 
 ## Testing
@@ -260,9 +260,9 @@ All experiments must meet these requirements:
 ## Directory Structure
 
 ```
-cns_experiments/
+cns_crucible/
 ├── lib/
-│   └── cns_experiments/
+│   └── cns_crucible/
 │       ├── experiments/
 │       │   ├── claim_extraction.ex        # Legacy version
 │       │   └── scifact_claim_extraction.ex # New IR version
@@ -271,7 +271,7 @@ cns_experiments/
 │       └── pipelines/
 │           └── scifact_validation.ex
 ├── test/
-│   └── cns_experiments/
+│   └── cns_crucible/
 │       └── experiments/
 │           └── scifact_claim_extraction_test.exs
 └── mix.exs
@@ -307,7 +307,7 @@ cns/
 
 1. **Run Tests** - Ensure all tests pass:
    ```bash
-   cd cns_experiments && mix test
+   cd cns_crucible && mix test
    cd ../cns && mix test test/cns/training_v2_test.exs
    ```
 
@@ -327,7 +327,7 @@ cns/
 
 1. **Module not found** - Ensure all projects are compiled:
    ```bash
-   cd cns_experiments && mix deps.get && mix compile
+   cd cns_crucible && mix deps.get && mix compile
    ```
 
 2. **Tinkex API key missing** - Set environment variable:

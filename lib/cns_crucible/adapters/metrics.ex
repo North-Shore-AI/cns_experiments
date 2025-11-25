@@ -1,4 +1,4 @@
-defmodule CnsExperiments.Adapters.Metrics do
+defmodule CnsCrucible.Adapters.Metrics do
   @moduledoc """
   Implementation of `Crucible.CNS.Adapter` that wires CNS metrics into Crucible.
 
@@ -12,7 +12,7 @@ defmodule CnsExperiments.Adapters.Metrics do
 
   alias CNS.{Config, SNO, Topology}
   alias CNS.Validation.Semantic
-  alias CnsExperiments.Adapters.Common
+  alias CnsCrucible.Adapters.Common
 
   @impl true
   @spec evaluate(list(map()), list(String.t()), map()) :: {:ok, map()} | {:error, term()}
@@ -62,7 +62,7 @@ defmodule CnsExperiments.Adapters.Metrics do
     rescue
       e ->
         Logger.error(
-          "[CnsExperiments.Adapters.Metrics] evaluation failed: #{Exception.message(e)}"
+          "[CnsCrucible.Adapters.Metrics] evaluation failed: #{Exception.message(e)}"
         )
 
         {:error, Exception.message(e)}

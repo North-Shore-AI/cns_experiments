@@ -1,6 +1,6 @@
-defmodule CnsExperiments do
+defmodule CnsCrucible do
   @moduledoc """
-  CNS Experiments - Integration harness for CNS + Crucible + Tinkex.
+  CNS Crucible - Integration harness for CNS + Crucible + Tinkex.
 
   This package wires together:
   - `cns` - Core CNS logic (Proposer, Antagonist, Synthesizer, critics)
@@ -14,6 +14,6 @@ defmodule CnsExperiments do
   Run the default claim extraction experiment.
   """
   def run_experiment(opts \\ []) do
-    CnsExperiments.Experiments.ClaimExtraction.run(opts)
+    CnsCrucible.Experiments.ClaimExtraction.run(opts)
   end
 end

@@ -4,7 +4,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      cns_experiments                         │
+│                      cns_crucible                         │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
 │  │ ScifactLoader│  │ClaimExtraction│  │ScifactValidation │   │
@@ -37,11 +37,11 @@
                      └─────────────┘
 ```
 
-## Proposed State (Correct - Bumblebee in cns_experiments)
+## Proposed State (Correct - Bumblebee in cns_crucible)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        cns_experiments                           │
+│                        cns_crucible                           │
 │                                                                  │
 │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │
 │  │ ScifactLoader│  │ClaimExtraction│  │   Evaluation Module    │ │
@@ -86,10 +86,10 @@
 ```
                     TRAINING PIPELINE
 
-┌─────────┐    ┌─────────────┐    ┌──────────────┐    ┌────────┐
-│ SciFact │ -> │ cns_        │ -> │ Crucible.    │ -> │ Tinkex │
-│ JSONL   │    │ experiments │    │ Lora/Tinkex  │    │ API    │
-└─────────┘    └─────────────┘    └──────────────┘    └────────┘
+┌─────────┐    ┌────────────────┐    ┌──────────────┐    ┌────────┐
+│ SciFact │ -> │ cns_crucible   │ -> │ Crucible.    │ -> │ Tinkex │
+│ JSONL   │    │ (experiments)  │    │ Lora/Tinkex  │    │ API    │
+└─────────┘    └────────────────┘    └──────────────┘    └────────┘
                                                            │
                                                            ▼
                                                     ┌─────────────┐
@@ -115,8 +115,8 @@ No Bumblebee needed - all ML happens on Tinker
 │ Adapter     │    │ Model       │    │ (CLAIM text) │
 └─────────────┘    └─────────────┘    └──────┬───────┘
                                               │
-                   ┌──────────────────────────┼────────────────┐
-                   │    cns_experiments       │                │
+                   ┌───────────────────────────────────────────┐
+                   │               cns_crucible                │
                    │                          ▼                │
                    │              ┌──────────────────┐         │
                    │              │ SemanticValidator│         │
@@ -146,7 +146,7 @@ Bumblebee only needed HERE - for evaluating outputs
             Python (tinkerer)              Elixir (proposed)
 
 ┌─────────────────────────┐     ┌─────────────────────────┐
-│ thinker/                │     │ cns_experiments/        │
+│ thinker/                │     │ cns_crucible/           │
 │ ├─ semantic_validation  │ <-> │ ├─ evaluation/          │
 │ │   (sentence-transform)│     │ │   semantic_validator  │
 │ ├─ evaluation.py        │     │ │   (bumblebee)         │
@@ -169,6 +169,6 @@ Bumblebee only needed HERE - for evaluating outputs
 | Component | Should Have ML Models? | Why |
 |-----------|----------------------|-----|
 | **cns** | ❌ NO | Pure theory - claim schemas, graphs, topology |
-| **cns_experiments** | ✅ YES | Evaluation needs models to validate outputs |
+| **cns_crucible** | ✅ YES | Evaluation needs models to validate outputs |
 | **crucible_framework** | ❌ NO | Just orchestration, adapters |
 | **tinkex** | ❌ NO | Pure API client |
