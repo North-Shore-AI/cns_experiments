@@ -1,41 +1,503 @@
 # CNS Experiments
 
-Integration harness for CNS + Crucible + Tinkex.
+**The integration harness for CNS + Crucible + Tinkex experiments**
+
+[![Elixir](https://img.shields.io/badge/elixir-1.14+-purple.svg)](https://elixir-lang.org)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+---
+
+## Overview
+
+`cns_experiments` is the **glue layer** that wires together:
+- **CNS**: Dialectical reasoning and claim synthesis
+- **CrucibleFramework**: Reliability-first experiment engine
+- **Tinkex**: LoRA fine-tuning via the Tinker API
+
+This application provides:
+1. **Adapters** implementing Crucible's CNS behaviours
+2. **Experiment definitions** as Crucible IR
+3. **Data loaders** for benchmark datasets (SciFact, etc.)
+4. **Pipelines** for validation workflows
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Elixir >= 1.14 / OTP >= 25
+- Local clones of `cns`, `crucible_framework`, `tinkex` as siblings:
+  ```
+  parent_dir/
+  ├── cns/
+  ├── crucible_framework/
+  ├── cns_experiments/
+  └── tinkex/
+  ```
+- (Optional) `TINKER_API_KEY` for live training runs
+
+### Installation
+
+```bash
+cd cns_experiments
+mix deps.get
+mix compile
+```
+
+### Run the SciFact Experiment
+
+```elixir
+# Interactive shell
+iex -S mix
+
+# Run with defaults
+CnsExperiments.Experiments.ScifactClaimExtraction.run()
+
+# Run with custom options
+CnsExperiments.Experiments.ScifactClaimExtraction.run(
+  batch_size: 8,
+  limit: 100,
+  base_model: "meta-llama/Llama-3.2-3B",
+  lora_rank: 16
+)
+```
+
+### Via Mix Task
+
+```bash
+mix cns.run_claim_experiment --limit 50 --batch-size 4
+```
+
+---
 
 ## Architecture
 
+`cns_experiments` sits at the top of the integration stack:
+
 ```
-cns_experiments/
-├── lib/
-│   ├── cns_experiments.ex           # Main entry point
-│   ├── cns_experiments/
-│   │   ├── application.ex           # OTP application
-│   │   ├── experiments/             # Experiment runners
-│   │   │   └── claim_extraction.ex  # First vertical slice
-│   │   ├── pipelines/               # Validation pipelines
-│   │   └── reporting/               # Report generation
-│   └── mix/tasks/                   # CLI tasks
-└── test/
+┌─────────────────────────────────────────────────────────────────┐
+│                       cns_experiments                            │
+│                                                                  │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐ │
+│  │ Experiments      │  │ Adapters         │  │ Data Loaders  │ │
+│  │ • ScifactClaim   │  │ • Metrics        │  │ • SciFact     │ │
+│  │   Extraction     │  │ • Surrogates     │  │               │ │
+│  │                  │  │ • TDA            │  │               │ │
+│  └────────┬─────────┘  └────────┬─────────┘  └───────┬───────┘ │
+│           │                     │                    │          │
+│           └─────────────────────┼────────────────────┘          │
+│                                 │                               │
+│                    Crucible.IR.Experiment                       │
+└─────────────────────────────────┼───────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    crucible_framework                            │
+│                                                                  │
+│  Pipeline.Runner → Stages → Backend.Tinkex                      │
+└─────────────────────────────────────────────────────────────────┘
+                                  │
+              ┌───────────────────┼───────────────────┐
+              ▼                   ▼                   ▼
+        ┌─────────┐         ┌─────────┐         ┌─────────┐
+        │   cns   │         │ tinkex  │         │crucible_│
+        │         │         │         │         │ bench   │
+        └─────────┘         └─────────┘         └─────────┘
 ```
+
+---
+
+## Adapters
+
+Adapters implement Crucible's CNS behaviours, bridging CNS library functions into the Crucible pipeline.
+
+### Metrics Adapter
+
+**File**: `lib/cns_experiments/adapters/metrics.ex`
+**Implements**: `Crucible.CNS.Adapter`
+
+Computes comprehensive CNS quality metrics:
+
+| Metric | Description |
+|--------|-------------|
+| `schema_compliance` | Fraction of outputs parseable as valid SNOs |
+| `citation_accuracy` | Fraction of citations referencing valid documents |
+| `mean_entailment` | Average entailment score (confidence x evidence) |
+| `mean_similarity` | Average semantic similarity to expected output |
+| `topology.mean_beta1` | Average B1 per SNO (cycle indicator) |
+| `topology.dag_count` | Count of DAG-structured outputs |
+| `chirality.mean_score` | Polarity conflict rate |
+| `overall_quality` | Weighted composite score |
+| `meets_threshold` | Boolean: all quality thresholds met |
+
+```elixir
+# Usage (called by Crucible.Stage.CNSMetrics)
+{:ok, metrics} = CnsExperiments.Adapters.Metrics.evaluate(examples, outputs)
+```
+
+### Surrogates Adapter
+
+**File**: `lib/cns_experiments/adapters/surrogates.ex`
+**Implements**: `Crucible.CNS.SurrogateAdapter`
+
+Computes lightweight topology surrogates without full TDA:
+
+| Metric | Description |
+|--------|-------------|
+| `beta1_surrogate` | Cycle count via Tarjan's SCC algorithm |
+| `fragility_score` | Embedding variance (semantic stability) |
+| `beta1_mean` | Mean B1 across all SNOs |
+| `beta1_high_fraction` | Fraction with B1 > 0 |
+| `fragility_mean` | Mean fragility score |
+| `fragility_high_fraction` | Fraction with fragility > 0.5 |
+
+```elixir
+# Usage (called by Crucible.Stage.CNSSurrogateValidation)
+{:ok, result} = CnsExperiments.Adapters.Surrogates.compute_surrogates(examples, outputs)
+```
+
+### TDA Adapter
+
+**File**: `lib/cns_experiments/adapters/tda.ex`
+**Implements**: `Crucible.CNS.TdaAdapter`
+
+Full topological data analysis when surrogates indicate potential issues.
+
+```elixir
+# Usage (called by Crucible.Stage.CNSTdaValidation)
+{:ok, result} = CnsExperiments.Adapters.TDA.compute_tda(snos)
+```
+
+### Common Utilities
+
+**File**: `lib/cns_experiments/adapters/common.ex`
+
+Shared parsing and transformation utilities:
+- `parse_outputs/1` - Parse LLM outputs into structured results
+- `build_snos/2` - Convert parsed results to SNO structs
+- `extract_snos/1` - Extract SNOs from parsed results
+- `embedding_vectors/1` - Extract embedding vectors for fragility
+
+---
+
+## Experiments
+
+### SciFact Claim Extraction
+
+**File**: `lib/cns_experiments/experiments/scifact_claim_extraction.ex`
+
+The canonical "hello world" experiment demonstrating full integration.
+
+#### What It Does
+
+1. **Load** SciFact claim extraction dataset from JSONL
+2. **Validate** data schema and quality
+3. **Apply** guardrails (prompt injection, PII)
+4. **Train** LoRA adapter via Tinkex
+5. **Sample** from fine-tuned model
+6. **Evaluate** with CNS metrics (schema, citation, topology, chirality)
+7. **Run** statistical tests (bootstrap, Mann-Whitney)
+8. **Generate** reports (Markdown, JSON)
+
+#### Pipeline Stages
+
+```
+:data_load -> :data_checks -> :guardrails -> :backend_call ->
+:cns_surrogate_validation -> :cns_tda_validation -> :cns_metrics ->
+:bench -> :report
+```
+
+#### Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `:batch_size` | 4 | Training batch size |
+| `:limit` | `:infinity` | Limit number of examples |
+| `:base_model` | `"meta-llama/Llama-3.2-1B"` | Base model for LoRA |
+| `:lora_rank` | 8 | LoRA rank |
+| `:lora_alpha` | 16 | LoRA alpha |
+| `:learning_rate` | 1.0e-4 | Learning rate |
+| `:warmup_steps` | 100 | Warmup steps |
+| `:compute_topology` | true | Compute topology metrics |
+| `:compute_chirality` | true | Compute chirality metrics |
+
+#### Example Output
+
+```
+=============================================================
+EXPERIMENT SUMMARY
+=============================================================
+
+Training Metrics:
+  Loss: 0.234
+  Steps: 250
+
+CNS Metrics:
+  Schema compliance: 0.96
+  Citation accuracy: 0.92
+  Topology score: 0.15
+  Chirality score: 0.08
+
+Statistical Tests:
+  Bootstrap CI: [0.89, 0.97]
+  Effect size: 0.72 (medium)
+
+=============================================================
+```
+
+---
+
+## Data Loaders
+
+### SciFact Loader
+
+**File**: `lib/cns_experiments/data/scifact_loader.ex`
+
+Loads the SciFact claim extraction dataset:
+
+```elixir
+# Load all examples
+{:ok, examples} = CnsExperiments.Data.ScifactLoader.load()
+
+# Load with options
+{:ok, examples} = CnsExperiments.Data.ScifactLoader.load(
+  path: "path/to/custom.jsonl",
+  limit: 100,
+  batch_size: 8
+)
+```
+
+Expected JSONL format:
+```json
+{"prompt": "Extract claims from...", "completion": "CLAIM[c1]: ...", "metadata": {"doc_ids": [123, 456]}}
+```
+
+---
+
+## Pipelines
+
+### SciFact Validation Pipeline
+
+**File**: `lib/cns_experiments/pipelines/scifact_validation.ex`
+
+Standalone validation pipeline (without training):
+
+```elixir
+CnsExperiments.Pipelines.ScifactValidation.run(
+  examples: examples,
+  outputs: model_outputs
+)
+```
+
+---
+
+## Configuration
+
+### config/config.exs
+
+```elixir
+import Config
+
+# CNS adapter configuration
+config :crucible_framework,
+  cns_adapter: CnsExperiments.Adapters.Metrics,
+  cns_surrogate_adapter: CnsExperiments.Adapters.Surrogates,
+  cns_tda_adapter: CnsExperiments.Adapters.TDA
+
+# Quality thresholds
+config :cns,
+  schema_compliance_threshold: 0.95,
+  citation_accuracy_threshold: 0.95,
+  mean_entailment_threshold: 0.50
+
+# Tinkex configuration (live runs)
+config :tinkex,
+  api_key: System.get_env("TINKER_API_KEY"),
+  base_url: "https://api.tinker.ai/v1"
+```
+
+### Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `TINKER_API_KEY` | API key for Tinkex (live training) |
+| `CNS_DATA_PATH` | Override default dataset path |
+
+---
+
+## IR Design Reference
+
+This section documents how the Crucible IR is used throughout the integration, matching the design spec from `001_crucible_long_term_plan.md` and `002_crucible_IR_Structs_and_Behaviors.md`.
+
+### IR Structs Used
+
+| Struct | Location | Purpose |
+|--------|----------|---------|
+| `Crucible.IR.Experiment` | `crucible_framework` | Top-level experiment definition |
+| `Crucible.IR.DatasetRef` | `crucible_framework` | Dataset specification |
+| `Crucible.IR.BackendRef` | `crucible_framework` | Backend configuration |
+| `Crucible.IR.StageDef` | `crucible_framework` | Pipeline stage definitions |
+| `Crucible.IR.ReliabilityConfig` | `crucible_framework` | Reliability features |
+| `Crucible.IR.OutputSpec` | `crucible_framework` | Output artifact specs |
+
+### How IR Flows Through the System
+
+1. **Experiment Definition** (`cns_experiments`):
+   ```elixir
+   %Experiment{
+     id: "cns_scifact_tinkex_v1",
+     dataset: %DatasetRef{name: "scifact_claims", ...},
+     pipeline: [%StageDef{name: :data_load}, ...],
+     backend: %BackendRef{id: :tinkex, ...},
+     reliability: %ReliabilityConfig{...},
+     outputs: [%OutputSpec{...}]
+   }
+   ```
+
+2. **Pipeline Execution** (`crucible_framework`):
+   - `Pipeline.Runner.run/2` receives `%Experiment{}`
+   - Creates `%Context{}` with experiment reference
+   - Iterates `experiment.pipeline` calling each stage
+
+3. **Stage Resolution** (`crucible_framework`):
+   - `Registry.stage_module/1` maps `:cns_metrics` -> `Crucible.Stage.CNSMetrics`
+   - Stage receives `%Context{}` and `opts` from `%StageDef{}`
+
+4. **Adapter Invocation** (`cns_experiments`):
+   - `Crucible.Stage.CNSMetrics` calls configured `cns_adapter`
+   - Adapter (e.g., `CnsExperiments.Adapters.Metrics`) processes data
+   - Returns metrics that stage adds to `context.metrics`
+
+5. **Backend Calls** (`crucible_framework` -> `tinkex`):
+   - `Crucible.Stage.BackendCall` resolves `experiment.backend`
+   - Calls `Crucible.Backend.Tinkex` which wraps Tinkex SDK
+   - Training/sampling results added to `context.outputs`
+
+### Design Compliance
+
+The implementation matches the design spec:
+
+| Design Requirement | Implementation Status |
+|-------------------|----------------------|
+| Backend-agnostic IR | `%Experiment{}` has no Tinkex-specific fields |
+| Stages as behaviours | `Crucible.Stage` callback with `run/2` |
+| Backends as behaviours | `Crucible.Backend` with full callback set |
+| Runtime context | `Crucible.Context` threaded through stages |
+| Plugin stages | Stages resolve via registry, not hardcoded |
+| No single-node assumptions | IR contains no infrastructure details |
+
+---
+
+## Module Reference
+
+```
+lib/
+├── cns_experiments.ex                # Application entry point
+├── cns_experiments/
+│   ├── application.ex                # OTP Application
+│   ├── adapters/
+│   │   ├── common.ex                 # Shared utilities
+│   │   ├── metrics.ex                # Crucible.CNS.Adapter impl
+│   │   ├── surrogates.ex             # Crucible.CNS.SurrogateAdapter impl
+│   │   └── tda.ex                    # Crucible.CNS.TdaAdapter impl
+│   ├── data/
+│   │   └── scifact_loader.ex         # SciFact dataset loader
+│   ├── experiments/
+│   │   ├── claim_extraction.ex       # Base claim extraction
+│   │   └── scifact_claim_extraction.ex # SciFact-specific experiment
+│   └── pipelines/
+│       └── scifact_validation.ex     # Validation-only pipeline
+└── mix/
+    └── tasks/
+        └── cns.run_claim_experiment.ex # Mix task
+```
+
+---
+
+## Development
+
+### Setup
+
+```bash
+# Clone all required repos as siblings
+git clone https://github.com/North-Shore-AI/cns.git
+git clone https://github.com/North-Shore-AI/crucible_framework.git
+git clone https://github.com/North-Shore-AI/cns_experiments.git
+git clone https://github.com/North-Shore-AI/tinkex.git
+
+# Setup cns_experiments
+cd cns_experiments
+mix deps.get
+mix compile
+```
+
+### Testing
+
+```bash
+# Run all tests
+mix test
+
+# Run with coverage
+mix test --cover
+
+# Run specific test file
+mix test test/cns_experiments/adapters/metrics_test.exs
+```
+
+### Documentation
+
+```bash
+mix docs
+open doc/index.html
+```
+
+---
 
 ## Dependencies
 
-- `cns` - Core CNS logic (Proposer, Antagonist, Synthesizer, critics)
-- `crucible_framework` - Experiment engine (harness, telemetry, bench)
-- `tinkex` - Tinker SDK for LoRA training
-- `bumblebee` + `exla` - ML models for validation
+### Core Dependencies
 
-## Usage
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `cns` | path: "../cns" | CNS library |
+| `crucible_framework` | path: "../crucible_framework" | Experiment engine |
+| `tinkex` | path: "../tinkex" | Tinkex SDK |
+| `crucible_ensemble` | path: "../crucible_ensemble" | Multi-model voting |
+| `crucible_hedging` | path: "../crucible_hedging" | Request hedging |
+| `crucible_bench` | path: "../crucible_bench" | Statistical testing |
+| `crucible_trace` | path: "../crucible_trace" | Causal transparency |
 
-```bash
-# Setup
-mix deps.get
-mix compile
+### ML Stack
 
-# Run experiment
-mix cns.run_claim_experiment --limit 50
-```
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `bumblebee` | ~> 0.5 | Transformer models |
+| `exla` | ~> 0.7 | XLA backend |
+| `nx` | ~> 0.7 | Numerical computing |
+| `axon` | ~> 0.6 | Neural networks |
 
-## Status
+---
 
-Skeleton implementation. Wire in actual CNS + Crucible modules for real results.
+## Related Repositories
+
+| Repository | Purpose |
+|------------|---------|
+| [crucible_framework](https://github.com/North-Shore-AI/crucible_framework) | Experiment engine with IR and pipeline |
+| [cns](https://github.com/North-Shore-AI/cns) | Core CNS dialectical reasoning library |
+| [tinkex](https://github.com/North-Shore-AI/tinkex) | Tinker SDK for LoRA training |
+
+---
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+---
+
+## Acknowledgments
+
+- North-Shore-AI organization
+- The Crucible Framework team
+- CNS research contributors
+- Tinkex/Tinker team
