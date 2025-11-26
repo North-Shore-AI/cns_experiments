@@ -67,9 +67,9 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtractionTest do
                :data_checks,
                :guardrails,
                :backend_call,
-               :cns_surrogate_validation,
-               :cns_tda_validation,
-               :cns_metrics,
+               :analysis_surrogate_validation,
+               :analysis_tda_validation,
+               :analysis_metrics,
                :bench,
                :report
              ]
@@ -130,7 +130,7 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtractionTest do
       assert experiment.backend.options.learning_rate == 2.0e-4
       assert experiment.backend.options.warmup_steps == 200
 
-      cns_stage = Enum.find(experiment.pipeline, &(&1.name == :cns_metrics))
+      cns_stage = Enum.find(experiment.pipeline, &(&1.name == :analysis_metrics))
       assert cns_stage.options.compute_topology == false
       assert cns_stage.options.compute_chirality == false
     end
@@ -156,7 +156,7 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtractionTest do
     test "CNS metrics stage has correct options" do
       experiment = ScifactClaimExtraction.build_experiment()
 
-      cns_stage = Enum.find(experiment.pipeline, &(&1.name == :cns_metrics))
+      cns_stage = Enum.find(experiment.pipeline, &(&1.name == :analysis_metrics))
       assert %StageDef{} = cns_stage
       assert cns_stage.options.compute_topology == true
       assert cns_stage.options.compute_chirality == true

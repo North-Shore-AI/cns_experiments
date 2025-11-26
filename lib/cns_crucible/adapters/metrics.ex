@@ -1,12 +1,12 @@
 defmodule CnsCrucible.Adapters.Metrics do
   @moduledoc """
-  Implementation of `Crucible.CNS.Adapter` that wires CNS metrics into Crucible.
+  Implementation of `Crucible.Analysis.Adapter` that wires CNS metrics into Crucible.
 
   Derived from the former `CNS.CrucibleAdapter`, now hosted in the integration
   app to keep `cns` free of Crucible dependencies.
   """
 
-  @behaviour Crucible.CNS.Adapter
+  @behaviour Crucible.Analysis.Adapter
 
   require Logger
 
@@ -61,9 +61,7 @@ defmodule CnsCrucible.Adapters.Metrics do
       {:ok, metrics}
     rescue
       e ->
-        Logger.error(
-          "[CnsCrucible.Adapters.Metrics] evaluation failed: #{Exception.message(e)}"
-        )
+        Logger.error("[CnsCrucible.Adapters.Metrics] evaluation failed: #{Exception.message(e)}")
 
         {:error, Exception.message(e)}
     end

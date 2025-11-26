@@ -1,9 +1,9 @@
 defmodule CnsCrucible.Adapters.TDA do
   @moduledoc """
-  CNS-based implementation of `Crucible.CNS.TDAAdapter`.
+  CNS-based implementation of `Crucible.Analysis.TDAAdapter`.
   """
 
-  @behaviour Crucible.CNS.TDAAdapter
+  @behaviour Crucible.Analysis.TDAAdapter
 
   require Logger
 
@@ -81,8 +81,6 @@ defmodule CnsCrucible.Adapters.TDA do
     {results, summary}
   end
 
-  defp format_result(_result, count), do: {[], default_summary(count)}
-
   defp diagram_barcodes(diagrams) do
     diagrams
     |> Enum.map(fn %{dimension: dim, pairs: pairs} ->
@@ -127,8 +125,7 @@ defmodule CnsCrucible.Adapters.TDA do
 
   defp ensure_embeddings(snos) do
     snos
-    |> Enum.with_index()
-    |> Enum.map(fn {%{metadata: meta} = sno, idx} ->
+    |> Enum.map(fn %{metadata: meta} = sno ->
       cond do
         Map.has_key?(meta, :embedding) or Map.has_key?(meta, "embedding") ->
           sno
@@ -136,42 +133,19 @@ defmodule CnsCrucible.Adapters.TDA do
         true ->
           case Adapter.extract_embedding(sno, source: :generate) do
             {:ok, embedding} ->
-              Logger.info(
-                "[CnsCrucible.Adapters.TDA] embedding_provider used for #{sno.id || idx}"
-              )
+              Logger.info("[CnsCrucible.Adapters.TDA] embedding_provider used for #{sno.id}")
 
               %{sno | metadata: Map.put(meta, :embedding, embedding)}
 
             {:error, reason} ->
               Logger.error(
-                "[CnsCrucible.Adapters.TDA] embedding missing for #{sno.id || idx}: #{inspect(reason)}"
-              )
-
-              raise "Embedding unavailable (see logs)"
-
-            other ->
-              Logger.error(
-                "[CnsCrucible.Adapters.TDA] embedding missing for #{sno.id || idx}: #{inspect(other)}"
+                "[CnsCrucible.Adapters.TDA] embedding missing for #{sno.id}: #{inspect(reason)}"
               )
 
               raise "Embedding unavailable (see logs)"
           end
       end
     end)
-  end
-
-  defp default_summary(count, extra \\ %{}) do
-    Map.merge(
-      %{
-        beta0_mean: 0.0,
-        beta1_mean: 0.0,
-        beta2_mean: 0.0,
-        high_loop_fraction: 0.0,
-        avg_persistence: 0.0,
-        n_snos: count
-      },
-      extra
-    )
   end
 
   defp normalize_opts(nil), do: []

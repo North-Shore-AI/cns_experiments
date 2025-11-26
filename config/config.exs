@@ -11,15 +11,15 @@ config :crucible_framework,
     data_checks: Crucible.Stage.DataChecks,
     guardrails: Crucible.Stage.Guardrails,
     backend_call: Crucible.Stage.BackendCall,
-    cns_surrogate_validation: Crucible.Stage.CNSSurrogateValidation,
-    cns_tda_validation: Crucible.Stage.CNSTDAValidation,
-    cns_metrics: Crucible.Stage.CNSMetrics,
+    analysis_surrogate_validation: Crucible.Stage.Analysis.SurrogateValidation,
+    analysis_tda_validation: Crucible.Stage.Analysis.TDAValidation,
+    analysis_metrics: Crucible.Stage.Analysis.Metrics,
     bench: Crucible.Stage.Bench,
     report: Crucible.Stage.Report
   },
-  cns_adapter: CnsCrucible.Adapters.Metrics,
-  cns_surrogate_adapter: CnsCrucible.Adapters.Surrogates,
-  cns_tda_adapter: CnsCrucible.Adapters.TDA,
+  analysis_adapter: CnsCrucible.Adapters.Metrics,
+  analysis_surrogate_adapter: CnsCrucible.Adapters.Surrogates,
+  analysis_tda_adapter: CnsCrucible.Adapters.TDA,
   guardrail_adapter: Crucible.Stage.Guardrails.Noop
 
 # Provide a minimal repo config to silence connection attempts when the application boots.

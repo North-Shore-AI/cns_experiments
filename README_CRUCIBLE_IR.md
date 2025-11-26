@@ -92,7 +92,7 @@ The pipeline defines the processing stages:
   %StageDef{name: :data_checks},    # Validate data quality
   %StageDef{name: :guardrails},     # Apply safety checks
   %StageDef{name: :backend_call},   # Train/inference
-  %StageDef{name: :cns_metrics},    # Compute CNS-specific metrics
+  %StageDef{name: :analysis_metrics},    # Compute CNS-specific metrics
   %StageDef{name: :bench},           # Statistical analysis
   %StageDef{name: :report}          # Generate reports
 ]
@@ -120,11 +120,11 @@ The backend specifies the compute provider:
 
 ### CNS Metrics Stage
 
-The `:cns_metrics` stage computes CNS-specific metrics:
+The `:analysis_metrics` stage computes CNS-specific metrics:
 
 ```elixir
 %StageDef{
-  name: :cns_metrics,
+  name: :analysis_metrics,
   options: %{
     compute_topology: true,    # Topological analysis of claim graphs
     compute_chirality: true,   # Chirality scores for dialectical balance

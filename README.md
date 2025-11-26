@@ -152,7 +152,7 @@ Adapters implement Crucible's CNS behaviours, bridging CNS library functions int
 ### Metrics Adapter
 
 **File**: `lib/cns_crucible/adapters/metrics.ex`
-**Implements**: `Crucible.CNS.Adapter`
+**Implements**: `Crucible.Analysis.Adapter`
 
 Computes comprehensive CNS quality metrics:
 
@@ -176,7 +176,7 @@ Computes comprehensive CNS quality metrics:
 ### Surrogates Adapter
 
 **File**: `lib/cns_crucible/adapters/surrogates.ex`
-**Implements**: `Crucible.CNS.SurrogateAdapter`
+**Implements**: `Crucible.Analysis.SurrogateAdapter`
 
 Computes lightweight topology surrogates without full TDA:
 
@@ -197,7 +197,7 @@ Computes lightweight topology surrogates without full TDA:
 ### TDA Adapter
 
 **File**: `lib/cns_crucible/adapters/tda.ex`
-**Implements**: `Crucible.CNS.TdaAdapter`
+**Implements**: `Crucible.Analysis.TdaAdapter`
 
 Full topological data analysis when surrogates indicate potential issues.
 
@@ -241,7 +241,7 @@ The canonical "hello world" experiment demonstrating full integration.
 
 ```
 :data_load -> :data_checks -> :guardrails -> :backend_call ->
-:cns_surrogate_validation -> :cns_tda_validation -> :cns_metrics ->
+:analysis_surrogate_validation -> :analysis_tda_validation -> :analysis_metrics ->
 :bench -> :report
 ```
 
@@ -336,11 +336,11 @@ CnsCrucible.Pipelines.ScifactValidation.run(
 ```elixir
 import Config
 
-# CNS adapter configuration
+# Analysis adapter configuration
 config :crucible_framework,
-  cns_adapter: CnsCrucible.Adapters.Metrics,
-  cns_surrogate_adapter: CnsCrucible.Adapters.Surrogates,
-  cns_tda_adapter: CnsCrucible.Adapters.TDA
+  analysis_adapter: CnsCrucible.Adapters.Metrics,
+  analysis_surrogate_adapter: CnsCrucible.Adapters.Surrogates,
+  analysis_tda_adapter: CnsCrucible.Adapters.TDA
 
 # Quality thresholds
 config :cns,
@@ -398,11 +398,11 @@ This section documents how the Crucible IR is used throughout the integration, m
    - Iterates `experiment.pipeline` calling each stage
 
 3. **Stage Resolution** (`crucible_framework`):
-   - `Registry.stage_module/1` maps `:cns_metrics` -> `Crucible.Stage.CNSMetrics`
+   - `Registry.stage_module/1` maps `:analysis_metrics` -> `Crucible.Stage.Analysis.Metrics`
    - Stage receives `%Context{}` and `opts` from `%StageDef{}`
 
 4. **Adapter Invocation** (`cns_crucible`):
-   - `Crucible.Stage.CNSMetrics` calls configured `cns_adapter`
+   - `Crucible.Stage.Analysis.Metrics` calls configured `analysis_adapter`
    - Adapter (e.g., `CnsCrucible.Adapters.Metrics`) processes data
    - Returns metrics that stage adds to `context.metrics`
 
@@ -435,9 +435,9 @@ lib/
 │   ├── application.ex                # OTP Application
 │   ├── adapters/
 │   │   ├── common.ex                 # Shared utilities
-│   │   ├── metrics.ex                # Crucible.CNS.Adapter impl
-│   │   ├── surrogates.ex             # Crucible.CNS.SurrogateAdapter impl
-│   │   └── tda.ex                    # Crucible.CNS.TdaAdapter impl
+│   │   ├── metrics.ex                # Crucible.Analysis.Adapter impl
+│   │   ├── surrogates.ex             # Crucible.Analysis.SurrogateAdapter impl
+│   │   └── tda.ex                    # Crucible.Analysis.TdaAdapter impl
 │   ├── data/
 │   │   └── scifact_loader.ex         # SciFact dataset loader
 │   ├── experiments/

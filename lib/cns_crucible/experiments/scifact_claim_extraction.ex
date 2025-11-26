@@ -68,7 +68,10 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtraction do
     Logger.info("Dataset: SciFact claim extraction")
     Logger.info("Backend: Tinkex LoRA (#{experiment.backend.options.base_model})")
 
-    case CrucibleFramework.run(experiment) do
+    # Call via apply so dialyzer keeps the error tuple variant from the path dependency spec.
+    result = apply(CrucibleFramework, :run, [experiment, []])
+
+    case result do
       {:ok, context} ->
         Logger.info("Experiment completed successfully!")
         print_summary(context)
@@ -205,17 +208,17 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtraction do
         }
       },
       %StageDef{
-        name: :cns_surrogate_validation,
+        name: :analysis_surrogate_validation,
         module: nil,
         options: %{}
       },
       %StageDef{
-        name: :cns_tda_validation,
+        name: :analysis_tda_validation,
         module: nil,
         options: %{}
       },
       %StageDef{
-        name: :cns_metrics,
+        name: :analysis_metrics,
         module: nil,
         options: %{
           compute_topology: Keyword.get(opts, :compute_topology, true),

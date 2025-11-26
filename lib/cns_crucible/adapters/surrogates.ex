@@ -1,9 +1,9 @@
 defmodule CnsCrucible.Adapters.Surrogates do
   @moduledoc """
-  CNS-based implementation of `Crucible.CNS.SurrogateAdapter`.
+  CNS-based implementation of `Crucible.Analysis.SurrogateAdapter`.
   """
 
-  @behaviour Crucible.CNS.SurrogateAdapter
+  @behaviour Crucible.Analysis.SurrogateAdapter
 
   alias CNS.Topology.Surrogates
   alias CNS.Topology
@@ -96,24 +96,6 @@ defmodule CnsCrucible.Adapters.Surrogates do
 
     graph
     |> Graph.subgraph([id | neighbors])
-  end
-
-  defp neighborhood(graph_map, id) when is_map(graph_map) do
-    neighbors =
-      graph_map
-      |> Map.get(id, [])
-      |> Enum.concat(
-        graph_map
-        |> Enum.filter(fn {_k, v} -> Enum.member?(v, id) end)
-        |> Enum.map(fn {k, _} -> k end)
-      )
-      |> Enum.uniq()
-
-    nodes = [id | neighbors] |> Enum.uniq()
-
-    graph_map
-    |> Enum.filter(fn {node, _} -> node in nodes end)
-    |> Enum.into(%{})
   end
 
   defp normalize_opts(nil), do: []
