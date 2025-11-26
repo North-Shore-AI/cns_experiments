@@ -87,12 +87,23 @@ defmodule CnsCrucible.Adapters.Surrogates do
     |> Enum.group_by(fn {id, _} -> id end, fn {_id, claim} -> claim end)
   end
 
-  defp neighborhood(graph, id) do
+  defp neighborhood(%Graph{} = graph, id) do
     neighbors =
       graph
+      |> Graph.out_neighbors(id)
+      |> Enum.concat(Graph.in_neighbors(graph, id))
+      |> Enum.uniq()
+
+    graph
+    |> Graph.subgraph([id | neighbors])
+  end
+
+  defp neighborhood(graph_map, id) when is_map(graph_map) do
+    neighbors =
+      graph_map
       |> Map.get(id, [])
       |> Enum.concat(
-        graph
+        graph_map
         |> Enum.filter(fn {_k, v} -> Enum.member?(v, id) end)
         |> Enum.map(fn {k, _} -> k end)
       )
@@ -100,13 +111,13 @@ defmodule CnsCrucible.Adapters.Surrogates do
 
     nodes = [id | neighbors] |> Enum.uniq()
 
-    graph
+    graph_map
     |> Enum.filter(fn {node, _} -> node in nodes end)
     |> Enum.into(%{})
   end
 
-  defp normalize_opts(nil), do: %{}
-  defp normalize_opts(opts) when is_map(opts), do: opts
-  defp normalize_opts(opts) when is_list(opts), do: Map.new(opts)
-  defp normalize_opts(_), do: %{}
+  defp normalize_opts(nil), do: []
+  defp normalize_opts(opts) when is_list(opts), do: opts
+  defp normalize_opts(opts) when is_map(opts), do: Map.to_list(opts)
+  defp normalize_opts(_), do: []
 end

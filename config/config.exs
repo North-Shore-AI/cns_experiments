@@ -28,3 +28,10 @@ config :crucible_framework, CrucibleFramework.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost"
+
+# Optional: use Gemini HTTP for embeddings in CNS.Topology.
+config :cns, :embedding_provider, CNS.Embedding.GeminiHTTP
+
+config :cns, CNS.Embedding.GeminiHTTP,
+  model: "text-embedding-004",
+  output_dimensionality: 768

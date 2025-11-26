@@ -71,6 +71,43 @@ mix cns_crucible.run_claim_experiment --limit 50
 
 ---
 
+## Topology Demos (CNS wrappers over ExTopology)
+
+Run these in `iex -S mix` (inside `cns_crucible`, deps compiled):
+
+```elixir
+alias CNS.{SNO, Provenance}
+
+# Build a small claim network with a cycle
+root = SNO.new("Root", id: "r1")
+child = SNO.new("Child", id: "c1", provenance: Provenance.new(:synthesizer, parent_ids: ["r1"]))
+cycle = SNO.new("Cycle", id: "c2", provenance: Provenance.new(:synthesizer, parent_ids: ["c1", "c2"]))
+snos = [root, child, cycle]
+
+# Graph invariants (β₀/β₁) via ExTopology
+CNS.Topology.invariants(snos)
+# => %{beta_zero: 1, beta_one: 1, euler_characteristic: 0, components: 1, vertices: 3, edges: 3}
+
+# Surrogate metrics: cycle count + embedding fragility (mock embeddings)
+embeddings = Nx.tensor([[0.0, 0.0], [0.2, 0.1], [0.9, 0.8]])
+surrogates = CNS.Topology.surrogates(Enum.zip_with(snos, fn sno, idx -> Map.put(sno, :metadata, %{embedding: Nx.to_flat_list(embeddings[idx])}) end))
+# => %{beta1: 1, fragility: 0.XX}
+
+# Full persistent homology (persists diagrams) via CNS.Topology.Persistence
+tda = CNS.Topology.tda(snos, max_dimension: 2)
+tda.summary
+```
+
+Or run the adapter-backed walkthrough (builds SNOs, surrogates, and TDA end-to-end):
+
+```bash
+mix cns_crucible.topology_demo
+```
+
+These examples match what the Crucible adapters call under the hood: they convert SNOs to graphs/embeddings, delegate to `ex_topology`, and reinterpret results for CNS.
+
+---
+
 ## Architecture
 
 `cns_crucible` sits at the top of the integration stack:

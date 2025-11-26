@@ -41,6 +41,7 @@ defmodule CnsCrucible.MixProject do
       {:exla, "~> 0.7"},
       {:nx, "~> 0.7"},
       {:axon, "~> 0.6"},
+      {:gemini_ex, "~> 0.4"},
 
       # Data processing
       {:jason, "~> 1.4"},
