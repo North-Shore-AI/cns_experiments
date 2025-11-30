@@ -32,18 +32,21 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtraction do
 
   require Logger
 
-  alias Crucible.IR.{
+  alias CrucibleIR.{
     Experiment,
     DatasetRef,
     BackendRef,
-    ReliabilityConfig,
-    EnsembleConfig,
-    HedgingConfig,
-    GuardrailConfig,
-    StatsConfig,
-    FairnessConfig,
-    OutputSpec,
-    StageDef
+    StageDef,
+    OutputSpec
+  }
+
+  alias CrucibleIR.Reliability.{
+    Config,
+    Ensemble,
+    Hedging,
+    Guardrail,
+    Stats,
+    Fairness
   }
 
   @doc """
@@ -135,31 +138,30 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtraction do
             loss_fn: :cross_entropy
           )
       },
-      reliability: %ReliabilityConfig{
-        ensemble: %EnsembleConfig{
+      reliability: %Config{
+        ensemble: %Ensemble{
           strategy: :none,
-          members: [],
+          models: [],
           options: %{}
         },
-        hedging: %HedgingConfig{
+        hedging: %Hedging{
           strategy: :off
         },
-        guardrails: %GuardrailConfig{
+        guardrails: %Guardrail{
           profiles: [:default],
+          fail_on_detection: false,
           options: %{
-            fail_on_violation: false,
             log_violations: true
           }
         },
-        stats: %StatsConfig{
-          tests: [:bootstrap, :mann_whitney],
+        stats: %Stats{
+          tests: [:bootstrap, :mannwhitney],
           alpha: 0.05,
-          options: %{
-            bootstrap_n: 1000,
-            effect_size: :cohens_d
-          }
+          bootstrap_iterations: 1000,
+          effect_size_type: :cohens_d,
+          options: %{}
         },
-        fairness: %FairnessConfig{
+        fairness: %Fairness{
           enabled: false
         }
       },
@@ -255,30 +257,30 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtraction do
     [
       %OutputSpec{
         name: :metrics_report,
-        description: "CNS metrics and benchmark results",
         formats: [:markdown, :json],
         sink: :file,
         options: %{
+          description: "CNS metrics and benchmark results",
           path: "reports/cns_scifact_#{exp_id}_#{timestamp}",
           include_raw_data: false
         }
       },
       %OutputSpec{
         name: :checkpoint,
-        description: "Trained LoRA weights",
         formats: [],
         sink: :file,
         options: %{
+          description: "Trained LoRA weights",
           path: "checkpoints/cns_scifact_#{exp_id}",
           save_optimizer_state: false
         }
       },
       %OutputSpec{
         name: :telemetry,
-        description: "Training telemetry and metrics",
         formats: [:json],
         sink: :file,
         options: %{
+          description: "Training telemetry and metrics",
           path: "telemetry/cns_scifact_#{exp_id}_#{timestamp}.jsonl",
           include_gradients: false
         }

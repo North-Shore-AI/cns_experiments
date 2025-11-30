@@ -3,14 +3,15 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtractionTest do
 
   alias CnsCrucible.Experiments.ScifactClaimExtraction
 
-  alias Crucible.IR.{
+  alias CrucibleIR.{
     Experiment,
     DatasetRef,
     BackendRef,
-    ReliabilityConfig,
     OutputSpec,
     StageDef
   }
+
+  alias CrucibleIR.Reliability.Config
 
   describe "build_experiment/1" do
     test "creates valid experiment struct with defaults" do
@@ -78,12 +79,12 @@ defmodule CnsCrucible.Experiments.ScifactClaimExtractionTest do
     test "reliability configuration is correct" do
       experiment = ScifactClaimExtraction.build_experiment()
 
-      assert %ReliabilityConfig{} = experiment.reliability
+      assert %Config{} = experiment.reliability
       assert experiment.reliability.ensemble.strategy == :none
       assert experiment.reliability.hedging.strategy == :off
       assert experiment.reliability.guardrails.profiles == [:default]
-      assert experiment.reliability.guardrails.options.fail_on_violation == false
-      assert experiment.reliability.stats.tests == [:bootstrap, :mann_whitney]
+      assert experiment.reliability.guardrails.fail_on_detection == false
+      assert experiment.reliability.stats.tests == [:bootstrap, :mannwhitney]
       assert experiment.reliability.stats.alpha == 0.05
       assert experiment.reliability.fairness.enabled == false
     end
